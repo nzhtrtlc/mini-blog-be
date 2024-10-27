@@ -1,41 +1,80 @@
-import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../config/supabase';
+import { NextFunction, Request, Response } from 'express'
+import { User } from '@supabase/supabase-js'
+import { supabase } from '../config/supabase'
 
-export const requireAuth = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const authHeader = req.headers.authorization;
+type AuthenticatedUser = User & {
+  role?: string;
+}
 
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header' });
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
-    req.user = user;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Authentication failed' });
-  }
+type AuthRequest = Request & {
+  user?: AuthenticatedUser;
 };
 
+export const requireAuth = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  try {
+    const authHeader = req.headers.authorization
+
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: 'No bearer token provided'
+        }
+      })
+    }
+
+    const [scheme, token] = authHeader.split(' ')
+
+    if (scheme !== 'Bearer') {
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: 'Invalid authorization scheme. Expected "Bearer"'
+        }
+      })
+    }
+
+    if (!token || token.trim() === '') {
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: 'Token is missing'
+        }
+      })
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: 'Invalid or expired token'
+        }
+      })
+    }
+
+    req.user = user as AuthenticatedUser
+    return next()
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      error: {
+        message: 'Authentication failed'
+      }
+    })
+  }
+}
+
+// Global type declarations
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
+      user?: AuthenticatedUser;
     }
   }
 }
