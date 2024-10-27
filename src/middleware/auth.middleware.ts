@@ -13,9 +13,8 @@ export const requireAuth = async (
       return res.status(401).json({ error: 'No authorization header' });
     }
 
-    // Bearer token formatı: "Bearer xyz..."
     const token = authHeader.split(' ')[1];
-    
+
     if (!token) {
       return res.status(401).json({ error: 'No token provided' });
     }
@@ -26,7 +25,6 @@ export const requireAuth = async (
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    // Request'e user bilgisini ekleyelim ki controller'larda kullanabilelim
     req.user = user;
     next();
   } catch (error) {
@@ -34,11 +32,10 @@ export const requireAuth = async (
   }
 };
 
-// TypeScript için Request interface'ini genişletelim
 declare global {
   namespace Express {
     interface Request {
-      user?: any; // Daha sonra user type'ını detaylı tanımlayabiliriz
+      user?: any;
     }
   }
 }

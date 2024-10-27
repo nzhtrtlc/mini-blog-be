@@ -1,6 +1,5 @@
-// src/services/post.service.ts
 import { supabase } from '../config/supabase';
-import type { Post, CreatePostDTO, UpdatePostDTO } from '../types/post.types';
+import type { Post } from '../types/post.types';
 
 export class PostService {
   async getAllPosts(): Promise<Post[]> {
