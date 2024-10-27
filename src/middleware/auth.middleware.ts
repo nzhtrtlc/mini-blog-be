@@ -27,7 +27,7 @@ export const requireAuth = async (
       })
     }
 
-    const [scheme, token] = authHeader.split(' ')
+    const [scheme, token] = authHeader?.split(' ')
 
     if (scheme !== 'Bearer') {
       return res.status(401).json({
