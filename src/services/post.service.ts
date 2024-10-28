@@ -1,50 +1,105 @@
-import { supabase } from '../config/supabase';
-import type { Post } from '../types/post.types';
+import { supabase } from "../config/supabase";
+import { Database } from "../types/database.types";
 
-export class PostService {
-  async getAllPosts(): Promise<Post[]> {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .order('created_at', { ascending: false });
+type Post = Database["public"]["Tables"]["posts"]["Row"];
 
-    if (error) {
-      throw new Error(`Error fetching posts: ${error.message}`);
-    }
+export const getPublishedPosts = async (): Promise<Post[]> => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select()
+    .eq("status", "published")
+    .order("created_at", { ascending: false });
 
-    return data || [];
+  if (error) {
+    throw new Error(`Error fetching posts: ${error.message}`);
   }
 
-  async getPublishedPosts(): Promise<Post[]> {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false });
+  return data || [];
+};
 
-    if (error) {
-      throw new Error(`Error fetching published posts: ${error.message}`);
+export const getPostBySlug = async (slug: string): Promise<Post | null> => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select()
+    .eq("slug", slug)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      // no rows found
+      return null;
     }
-
-    return data || [];
+    throw new Error(`Error fetching post: ${error.message}`);
   }
 
-  async getPostBySlug(slug: string): Promise<Post | null> {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .eq('slug', slug)
-      .single();
+  return data;
+};
 
-    if (error) {
-      if (error.code === 'PGRST116') { // no rows returned
-        return null;
-      }
-      throw new Error(`Error fetching post: ${error.message}`);
-    }
+export const createPost = async (postData: {
+  title: string;
+  slug: string;
+  description: string;
+  content: string;
+  status: "draft" | "published";
+}): Promise<Post> => {
+  const { data, error } = await supabase
+    .from("posts")
+    .insert(postData)
+    .select()
+    .single();
 
-    return data;
+  if (error) {
+    throw new Error(`Error creating post: ${error.message}`);
   }
-}
 
-export const postService = new PostService();
+  if (!data) {
+    throw new Error("No data returned from insert operation");
+  }
+
+  return data;
+};
+
+export const updatePost = async (
+  slug: string,
+  postData: Partial<{
+    title: string;
+    slug: string;
+    description: string;
+    content: string;
+    status: "draft" | "published";
+  }>
+): Promise<Post> => {
+  const { data, error } = await supabase
+    .from("posts")
+    .update(postData)
+    .eq("slug", slug)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Error updating post: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error("No data returned from update operation");
+  }
+
+  return data;
+};
+
+export const deletePost = async (slug: string): Promise<void> => {
+  const { error } = await supabase.from("posts").delete().eq("slug", slug);
+
+  if (error) {
+    throw new Error(`Error deleting post: ${error.message}`);
+  }
+};
+
+// İhtiyaç duyulursa tek bir obje olarak da export edebiliriz
+export const postService = {
+  getPublishedPosts,
+  getPostBySlug,
+  createPost,
+  updatePost,
+  deletePost,
+};
