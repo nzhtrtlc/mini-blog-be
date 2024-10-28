@@ -15,8 +15,11 @@ app.get('/', (req, res) => res.send('Express on Vercel'))
 const corsOptions = {
   origin: '*',
   methods: 'GET, HEAD, PUT, PATCH, POST, DELETE',
-  credentials: true
+  credentials: true,
+  allowedHeaders: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
 }
+
+app.options('*', cors(corsOptions))
 
 // Middlewares
 app.use(cors(corsOptions))
