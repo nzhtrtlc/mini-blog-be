@@ -71,5 +71,4 @@ coverage
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
-/.env
 .vercel
