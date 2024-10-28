@@ -11,7 +11,6 @@ export const getComments = async (req: Request, res: Response) => {
 
     res.json(comments);
   } catch (error) {
-    console.log(error);
     if (error instanceof Error) {
       res.status(500).json({
         success: false,

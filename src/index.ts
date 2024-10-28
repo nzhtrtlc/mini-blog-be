@@ -10,34 +10,22 @@ dotenv.config()
 const app = express()
 
 // @ts-ignore
-const allowCors = fn => async (req, res) => {
-  res.setHeader('Access-Control-Allow-Credentials', true)
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  // another common pattern
-  // res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  )
-  if (req.method === 'OPTIONS') {
-    res.status(200).end()
-    return
-  }
-  return await fn(req, res)
-}
-
-// @ts-ignore
 app.get('/', (req, res) => res.send('Express on Vercel'))
 
+const corsOptions = {
+  origin: '*',
+  methods: 'GET, HEAD, PUT, PATCH, POST, DELETE',
+  credentials: true
+}
+
 // Middlewares
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // Routes
-app.use('/api/auth', allowCors(authRoutes))
-app.use('/api/posts', allowCors(postRoutes))
-app.use('/api/posts/:postId/comments', allowCors(commentRoutes))
+app.use('/api/auth', authRoutes)
+app.use('/api/posts', postRoutes)
+app.use('/api/posts/:postId/comments', commentRoutes)
 
 const PORT = process.env.PORT || 3000
 
